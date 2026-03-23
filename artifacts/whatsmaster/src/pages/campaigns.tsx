@@ -3,8 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useGetCampaigns } from "@workspace/api-client-react";
 import { MOCK_CAMPAIGNS } from "@/lib/mock-data";
 import { Plus, Megaphone, Clock, CheckCircle2, Play, AlertCircle } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { formatNumber, formatPercentage, formatRelativeTime } from "@/lib/formatters";
 
 export default function CampaignsPage() {
   const { data, isError } = useGetCampaigns();
@@ -60,7 +59,7 @@ export default function CampaignsPage() {
                   <p className="text-sm text-muted-foreground truncate mb-2">{camp.message}</p>
                   <div className="text-xs text-white/40">
                     {camp.status === 'scheduled' ? 'Prévue pour le ' : 'Créée le '}
-                    {format(new Date(camp.scheduledAt || camp.createdAt), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                    {formatRelativeTime(new Date(camp.scheduledAt || camp.createdAt))}
                   </div>
                 </div>
 
@@ -68,13 +67,13 @@ export default function CampaignsPage() {
                   <div className="flex-1 md:w-full">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="text-muted-foreground">Destinataires</span>
-                      <span className="font-mono font-bold">{camp.recipientCount}</span>
+                      <span className="font-mono font-bold">{formatNumber(camp.recipientCount)}</span>
                     </div>
                     {camp.status === 'sent' && (
                       <>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-muted-foreground">Ouverture</span>
-                          <span className="font-mono font-bold text-emerald-400">{readRate}%</span>
+                          <span className="font-mono font-bold text-emerald-400">{formatPercentage(readRate)}</span>
                         </div>
                         <div className="w-full bg-black/50 rounded-full h-1.5 mt-2 overflow-hidden">
                           <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${readRate}%` }}></div>

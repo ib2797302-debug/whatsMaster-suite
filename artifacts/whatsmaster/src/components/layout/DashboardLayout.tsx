@@ -121,6 +121,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <button 
             className="lg:hidden text-muted-foreground hover:text-white"
             onClick={() => setMobileMenuOpen(true)}
+            aria-label="Ouvrir le menu"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -130,6 +131,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
               API Connectée
             </div>
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-muted-foreground hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+              aria-label={`Basculer vers le thème ${theme === "dark" ? "clair" : "sombre"}`}
+              title={`Thème ${theme === "dark" ? "clair" : "sombre"}`}
+            >
+              {theme === "dark" ? (
+                <Sun className="w-5 h-5" aria-hidden="true" />
+              ) : (
+                <Moon className="w-5 h-5" aria-hidden="true" />
+              )}
+            </button>
           </div>
         </header>
 
