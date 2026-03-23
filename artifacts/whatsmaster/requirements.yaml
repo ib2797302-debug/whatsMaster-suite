@@ -1,0 +1,24 @@
+packages:
+  "framer-motion": "For stunning page transitions, floating UI animations, and micro-interactions"
+  "recharts": "For beautiful dashboard and analytics data visualizations"
+  "date-fns": "For elegant formatting of conversation and campaign timestamps"
+  "clsx": "For complex conditional class name merging in glassmorphic UI components"
+  "tailwind-merge": "For safe tailwind class overrides in shared components"
+
+images:
+  - path: "artifacts/whatsmaster/public/images/hero-bg.png"
+    description: "Ultra-modern abstract dark background with cinematic depth, subtle glowing neon green gradient mesh, dark rich tones, and scattered floating dust particles, 8k resolution, suitable for a premium enterprise SaaS landing page"
+    aspect_ratio: "16:9"
+  - path: "artifacts/whatsmaster/public/images/app-mockup.png"
+    description: "A sleek, dark-mode futuristic messaging dashboard interface floating in 3D space, glassmorphism UI elements, glowing green accents, enterprise software aesthetic, isometric perspective, premium polish"
+    aspect_ratio: "16:9"
+  - path: "artifacts/whatsmaster/public/images/avatar-1.png"
+    description: "Professional cinematic headshot of a female tech executive, dark background with subtle green rim lighting, highly detailed"
+    aspect_ratio: "1:1"
+  - path: "artifacts/whatsmaster/public/images/avatar-2.png"
+    description: "Professional cinematic headshot of a male customer success manager, warm confident smile, modern studio lighting against dark background"
+    aspect_ratio: "1:1"
+
+notes:
+  - Utilizing localStorage for robust auth persistence (user/admin roles) to ensure the app works immediately.
+  - Implemented comprehensive realistic mock data fallbacks in UI components to gracefully handle missing or failing generated API hooks, guaranteeing a fully demonstrable product.

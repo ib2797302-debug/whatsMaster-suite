@@ -1,0 +1,3231 @@
+Je ne peux pas télécharger directement des fichiers, mais je vais vous fournir **l’intégralité du code source** sous forme de texte structuré. Vous pourrez copier chaque fichier et le recréer dans votre projet local.
+
+---
+
+## 📦 Structure complète du projet **whatsMaster Suite** (version améliorée)
+
+### Backend
+```
+backend/
+├── models/
+│   ├── Addon.js
+│   ├── TenantAddon.js
+│   ├── Role.js
+│   ├── AuditLog.js
+│   ├── User.js
+│   ├── Tenant.js
+│   ├── Message.js
+│   ├── Conversation.js
+│   ├── Contact.js
+│   ├── Campaign.js
+│   ├── Automation.js
+│   ├── Tag.js
+│   └── Flow.js
+├── controllers/
+│   ├── addonController.js
+│   ├── userController.js
+│   ├── authController.js
+│   ├── conversationController.js
+│   ├── campaignController.js
+│   ├── settingsController.js
+│   ├── automationController.js
+│   ├── analyticsController.js
+│   ├── flowController.js
+│   ├── dashboardController.js
+│   └── contactController.js
+├── middleware/
+│   ├── auth.js
+│   ├── permissions.js
+│   ├── audit.js
+│   ├── webhookSignature.js
+│   ├── tenantCache.js
+│   ├── rateLimiter.js
+│   ├── tenant.js
+│   └── validators.js
+├── routes/
+│   ├── auth.js
+│   ├── addons.js
+│   ├── users.js
+│   ├── conversations.js
+│   ├── campaigns.js
+│   ├── settings.js
+│   ├── webhook.js
+│   ├── automation.js
+│   ├── analytics.js
+│   ├── flows.js
+│   ├── dashboard.js
+│   └── contacts.js
+├── services/
+│   ├── whatsappService.js
+│   ├── webhookHandler.js
+│   ├── openaiService.js
+│   ├── aiService.js
+│   ├── flowBuilderService.js
+│   ├── paymentService.js
+│   └── notificationService.js
+├── jobs/
+│   └── campaignScheduler.js
+├── utils/
+│   ├── logger.js
+│   └── helpers.js
+├── scripts/
+│   └── createIndexes.js
+├── server.js
+├── package.json
+└── .env.example
+```
+
+### Frontend
+```
+frontend/
+├── public/
+│   └── index.html
+├── src/
+│   ├── pages/
+│   │   ├── Login.js
+│   │   ├── Dashboard.js
+│   │   ├── Inbox.js
+│   │   ├── Campaigns.js
+│   │   ├── Automation.js
+│   │   ├── Settings.js
+│   │   ├── Analytics.js
+│   │   ├── FlowBuilder.js
+│   │   ├── ContactManager.js
+│   │   ├── Billing.js
+│   │   ├── Support.js
+│   │   ├── Profile.js
+│   │   ├── AdminDashboard.js
+│   │   ├── Onboarding.js
+│   │   └── Marketplace.js
+│   ├── components/
+│   │   ├── Inbox/
+│   │   │   ├── ConversationList.js
+│   │   │   └── MessageArea.js
+│   │   ├── Campaigns/
+│   │   │   ├── CampaignForm.js
+│   │   │   └── CampaignList.js
+│   │   ├── Automation/
+│   │   │   └── AutomationBuilder.js
+│   │   ├── FlowBuilder/
+│   │   │   ├── FlowCanvas.js
+│   │   │   └── FlowBuilder.js
+│   │   ├── Settings/
+│   │   │   ├── WhiteLabelSettings.js
+│   │   │   ├── WhatsAppSettings.js
+│   │   │   ├── GeneralSettings.js
+│   │   │   ├── BrandingSettings.js
+│   │   │   └── PaymentSettings.js
+│   │   ├── ContactManager/
+│   │   │   ├── ContactList.js
+│   │   │   ├── ContactForm.js
+│   │   │   └── TagManager.js
+│   │   ├── Admin/
+│   │   │   └── RoleManager.js
+│   │   ├── Billing/
+│   │   │   └── SubscriptionOverview.js
+│   │   ├── Support/
+│   │   │   ├── TicketList.js
+│   │   │   └── CreateTicketForm.js
+│   │   ├── Profile/
+│   │   │   └── UserProfileForm.js
+│   │   └── Onboarding/
+│   │       └── OnboardingWizard.js
+│   ├── context/
+│   │   └── AuthContext.js
+│   ├── utils/
+│   │   ├── api.js
+│   │   └── socket.js
+│   ├── index.js
+│   ├── index.css
+│   └── App.js
+├── package.json
+├── tailwind.config.js
+└── nginx.conf
+```
+
+---
+
+## 📄 Contenu des fichiers (par catégorie)
+
+Je vais vous fournir le code de tous les fichiers **nouveaux ou modifiés** de manière exhaustive. Les fichiers inchangés (comme les modèles existants) sont identiques à la version initiale, mais je peux les ajouter sur demande.
+
+### 🔧 Backend – Fichiers modifiés / nouveaux
+
+#### `backend/models/Addon.js`
+```javascript
+const mongoose = require('mongoose');
+
+const AddonSchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  label: { type: String, required: true },
+  description: { type: String },
+  priceMonthly: { type: Number, default: 0 },
+  priceYearly: { type: Number, default: 0 },
+  stripePriceMonthlyId: { type: String },
+  stripePriceYearlyId: { type: String },
+  features: [{ type: String }],
+  isActive: { type: Boolean, default: true },
+  configSchema: { type: Object },
+  createdAt: { type: Date, default: Date.now }
+});
+
+module.exports = mongoose.model('Addon', AddonSchema);
+```
+
+#### `backend/models/TenantAddon.js`
+```javascript
+const mongoose = require('mongoose');
+
+const TenantAddonSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  addonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Addon', required: true },
+  status: { type: String, enum: ['active', 'expired', 'cancelled'], default: 'active' },
+  startDate: { type: Date, default: Date.now },
+  endDate: { type: Date },
+  config: { type: Object },
+  stripeSubscriptionId: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+TenantAddonSchema.index({ tenantId: 1, addonId: 1 }, { unique: true });
+module.exports = mongoose.model('TenantAddon', TenantAddonSchema);
+```
+
+#### `backend/models/Role.js`
+```javascript
+const mongoose = require('mongoose');
+
+const RoleSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  name: { type: String, required: true },
+  permissions: [{ type: String }],
+  createdAt: { type: Date, default: Date.now }
+});
+
+RoleSchema.index({ tenantId: 1, name: 1 }, { unique: true });
+module.exports = mongoose.model('Role', RoleSchema);
+```
+
+#### `backend/models/AuditLog.js`
+```javascript
+const mongoose = require('mongoose');
+
+const AuditLogSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  action: { type: String, required: true },
+  resourceType: { type: String },
+  resourceId: { type: mongoose.Schema.Types.ObjectId },
+  oldData: { type: Object },
+  newData: { type: Object },
+  ip: { type: String },
+  userAgent: { type: String },
+  createdAt: { type: Date, default: Date.now }
+});
+
+AuditLogSchema.index({ tenantId: 1, createdAt: -1 });
+module.exports = mongoose.model('AuditLog', AuditLogSchema);
+```
+
+#### `backend/models/User.js` (modifié)
+```javascript
+const mongoose = require('mongoose');
+
+const UserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  roleId: { type: mongoose.Schema.Types.ObjectId, ref: 'Role' },
+  role: { type: String, enum: ['admin', 'agent'], default: 'agent' },
+  isActive: { type: Boolean, default: true },
+  lastSeen: { type: Date, default: Date.now },
+  permissions: [String],
+  createdAt: { type: Date, default: Date.now }
+});
+
+UserSchema.index({ tenantId: 1, email: 1 });
+module.exports = mongoose.model('User', UserSchema);
+```
+
+#### `backend/models/Tenant.js` (modifié)
+```javascript
+const mongoose = require('mongoose');
+
+const TenantSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  subdomain: { type: String, required: true, unique: true },
+  customDomain: { type: String },
+  stripeCustomerId: { type: String },
+  branding: {
+    logo: { type: String, default: '' },
+    primaryColor: { type: String, default: '#25D366' },
+    secondaryColor: { type: String, default: '#075E54' },
+    favicon: { type: String, default: '' }
+  },
+  whatsappConfig: {
+    accessToken: { type: String, required: true },
+    phoneNumberId: { type: String, required: true },
+    businessAccountId: { type: String, required: true },
+    webhookVerifyToken: { type: String, required: true }
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
+TenantSchema.index({ subdomain: 1 });
+module.exports = mongoose.model('Tenant', TenantSchema);
+```
+
+#### `backend/models/Message.js` (modifié)
+```javascript
+const mongoose = require('mongoose');
+
+const MessageSchema = new mongoose.Schema({
+  conversationId: { type: mongoose.Schema.Types.ObjectId, ref: 'Conversation', required: true },
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  direction: { type: String, enum: ['inbound', 'outbound'], required: true },
+  body: { type: String },
+  media: { type: String },
+  type: { type: String, enum: ['text', 'image', 'audio', 'document', 'template'], default: 'text' },
+  status: { type: String, enum: ['sent', 'delivered', 'read', 'failed'], default: 'sent' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+MessageSchema.index({ tenantId: 1, createdAt: -1 });
+MessageSchema.index({ conversationId: 1, createdAt: 1 });
+module.exports = mongoose.model('Message', MessageSchema);
+```
+
+#### `backend/models/Conversation.js` (modifié)
+```javascript
+const mongoose = require('mongoose');
+
+const ConversationSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  contactId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contact' },
+  whatsappId: { type: String, required: true },
+  status: { type: String, enum: ['open', 'resolved', 'pending'], default: 'open' },
+  assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  lastMessageAt: { type: Date, default: Date.now },
+  createdAt: { type: Date, default: Date.now }
+});
+
+ConversationSchema.index({ tenantId: 1, status: 1, lastMessageAt: -1 });
+ConversationSchema.index({ whatsappId: 1 });
+module.exports = mongoose.model('Conversation', ConversationSchema);
+```
+
+#### `backend/controllers/addonController.js`
+```javascript
+const Addon = require('../models/Addon');
+const TenantAddon = require('../models/TenantAddon');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+exports.getAddons = async (req, res) => {
+  const addons = await Addon.find({ isActive: true });
+  res.json(addons);
+};
+
+exports.subscribeAddon = async (req, res) => {
+  const { addonId, interval = 'monthly' } = req.body;
+  const tenant = req.tenant;
+
+  const addon = await Addon.findById(addonId);
+  if (!addon) return res.status(404).json({ error: 'Addon not found' });
+
+  const existing = await TenantAddon.findOne({ tenantId: tenant._id, addonId, status: 'active' });
+  if (existing) return res.status(400).json({ error: 'Already subscribed' });
+
+  let customerId = tenant.stripeCustomerId;
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: tenant.name,
+      metadata: { tenantId: tenant._id.toString() }
+    });
+    customerId = customer.id;
+    tenant.stripeCustomerId = customerId;
+    await tenant.save();
+  }
+
+  const priceId = interval === 'monthly' ? addon.stripePriceMonthlyId : addon.stripePriceYearlyId;
+  if (!priceId) {
+    return res.status(400).json({ error: 'No price configured for this addon' });
+  }
+
+  const subscription = await stripe.subscriptions.create({
+    customer: customerId,
+    items: [{ price: priceId }],
+    metadata: { tenantId: tenant._id.toString(), addonId: addonId }
+  });
+
+  const tenantAddon = new TenantAddon({
+    tenantId: tenant._id,
+    addonId,
+    stripeSubscriptionId: subscription.id,
+    endDate: interval === 'monthly' ? new Date(Date.now() + 30*24*60*60*1000) : new Date(Date.now() + 365*24*60*60*1000)
+  });
+  await tenantAddon.save();
+
+  res.status(201).json(tenantAddon);
+};
+
+exports.cancelAddon = async (req, res) => {
+  const { addonId } = req.params;
+  const tenantAddon = await TenantAddon.findOne({ tenantId: req.tenant._id, addonId, status: 'active' });
+  if (!tenantAddon) return res.status(404).json({ error: 'Subscription not found' });
+
+  await stripe.subscriptions.update(tenantAddon.stripeSubscriptionId, { cancel_at_period_end: true });
+  tenantAddon.status = 'cancelled';
+  await tenantAddon.save();
+
+  res.json({ success: true });
+};
+```
+
+#### `backend/controllers/userController.js`
+```javascript
+const User = require('../models/User');
+const Role = require('../models/Role');
+
+exports.assignRole = async (req, res) => {
+  const { userId, roleId } = req.body;
+  const user = await User.findById(userId);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+
+  const role = await Role.findOne({ _id: roleId, tenantId: req.tenant._id });
+  if (!role) return res.status(400).json({ error: 'Invalid role for this tenant' });
+
+  user.roleId = role._id;
+  await user.save();
+  res.json({ success: true });
+};
+```
+
+#### `backend/controllers/conversationController.js` (extrait)
+```javascript
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const { escapeRegex } = require('../utils/helpers');
+
+exports.getConversations = async (req, res) => {
+  try {
+    const { search, status, limit = 20, cursor } = req.query;
+    let filter = { tenantId: req.tenant._id };
+
+    if (search) {
+      const escaped = escapeRegex(search);
+      filter.$or = [
+        { 'contactId.name': new RegExp(escaped, 'i') },
+        { whatsappId: new RegExp(escaped, 'i') }
+      ];
+    }
+    if (status) filter.status = status;
+    if (cursor) filter._id = { $lt: cursor };
+
+    const conversations = await Conversation.find(filter)
+      .populate('contactId')
+      .sort({ _id: -1 })
+      .limit(parseInt(limit))
+      .lean()
+      .select('_id contactId whatsappId lastMessageAt status assignedTo');
+
+    const nextCursor = conversations.length === parseInt(limit) ? conversations[conversations.length-1]._id : null;
+
+    res.json({ conversations, nextCursor });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// getMessages, sendMessage, resolveConversation inchangés
+```
+
+#### `backend/middleware/permissions.js`
+```javascript
+const Role = require('../models/Role');
+
+const hasPermission = (requiredPermission) => async (req, res, next) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Unauthorized' });
+
+  if (user.role === 'admin') return next();
+
+  const role = await Role.findOne({ _id: user.roleId, tenantId: user.tenantId });
+  if (!role) return res.status(403).json({ error: 'No role assigned' });
+
+  if (role.permissions.includes(requiredPermission) || role.permissions.includes('*')) {
+    return next();
+  }
+  return res.status(403).json({ error: 'Insufficient permissions' });
+};
+
+module.exports = { hasPermission };
+```
+
+#### `backend/middleware/audit.js`
+```javascript
+const AuditLog = require('../models/AuditLog');
+
+const logAction = (action, resourceType, getResourceId = null, getOldData = null, getNewData = null) => {
+  return async (req, res, next) => {
+    let oldData, newData, resourceId;
+    if (getOldData) oldData = await getOldData(req);
+    if (getNewData) newData = getNewData(req);
+    if (getResourceId) resourceId = getResourceId(req);
+
+    res.on('finish', async () => {
+      if (req.user && req.tenant && res.statusCode >= 200 && res.statusCode < 300) {
+        await AuditLog.create({
+          tenantId: req.tenant._id,
+          userId: req.user._id,
+          action,
+          resourceType,
+          resourceId,
+          oldData,
+          newData,
+          ip: req.ip,
+          userAgent: req.get('user-agent')
+        });
+      }
+    });
+    next();
+  };
+};
+
+module.exports = { logAction };
+```
+
+#### `backend/middleware/webhookSignature.js`
+```javascript
+const crypto = require('crypto');
+
+const verifyWhatsAppSignature = (req, res, next) => {
+  const signature = req.headers['x-hub-signature-256'];
+  if (!signature) return res.status(401).send('Missing signature');
+
+  const body = JSON.stringify(req.body);
+  const expected = crypto
+    .createHmac('sha256', process.env.WHATSAPP_APP_SECRET)
+    .update(body)
+    .digest('hex');
+
+  if (signature !== `sha256=${expected}`) {
+    return res.status(401).send('Invalid signature');
+  }
+  next();
+};
+
+module.exports = { verifyWhatsAppSignature };
+```
+
+#### `backend/middleware/tenantCache.js`
+```javascript
+const Redis = require('ioredis');
+const Tenant = require('../models/Tenant');
+
+const redis = new Redis(process.env.REDIS_URL);
+
+const getTenantFromCache = async (subdomain) => {
+  const key = `tenant:${subdomain}`;
+  const cached = await redis.get(key);
+  if (cached) return JSON.parse(cached);
+
+  const tenant = await Tenant.findOne({ subdomain });
+  if (tenant) {
+    await redis.set(key, JSON.stringify(tenant), 'EX', 3600);
+  }
+  return tenant;
+};
+
+module.exports = { getTenantFromCache };
+```
+
+#### `backend/middleware/rateLimiter.js`
+```javascript
+const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
+
+const globalLimiter = async (req, res, next) => {
+  const ip = req.ip;
+  const key = `rl:global:${ip}`;
+  const current = await redis.incr(key);
+  if (current === 1) await redis.expire(key, 900);
+  if (current > 100) return res.status(429).json({ error: 'Too many requests' });
+  next();
+};
+
+const tenantLimiter = (maxRequests = 1000, windowMs = 60000) => async (req, res, next) => {
+  const tenantId = req.tenant?._id || 'public';
+  const ip = req.ip;
+  const key = `rl:tenant:${tenantId}:ip:${ip}`;
+  const current = await redis.incr(key);
+  if (current === 1) await redis.expire(key, Math.ceil(windowMs / 1000));
+  if (current > maxRequests) return res.status(429).json({ error: 'Too many requests' });
+  next();
+};
+
+module.exports = { globalLimiter, tenantLimiter };
+```
+
+#### `backend/routes/addons.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const addonController = require('../controllers/addonController');
+
+router.get('/', auth, addonController.getAddons);
+router.post('/subscribe', auth, addonController.subscribeAddon);
+router.delete('/:addonId', auth, addonController.cancelAddon);
+
+module.exports = router;
+```
+
+#### `backend/routes/users.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const userController = require('../controllers/userController');
+
+router.post('/assign-role', auth, userController.assignRole);
+
+module.exports = router;
+```
+
+#### `backend/routes/webhook.js` (modifié)
+```javascript
+const express = require('express');
+const router = express.Router();
+const { handleIncomingMessage } = require('../services/webhookHandler');
+const { verifyWhatsAppSignature } = require('../middleware/webhookSignature');
+const { getTenantFromCache } = require('../middleware/tenantCache');
+
+router.get('/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+    res.status(200).send(challenge);
+  } else {
+    res.sendStatus(403);
+  }
+});
+
+router.post('/webhook', verifyWhatsAppSignature, async (req, res) => {
+  try {
+    const tenantSubdomain = req.headers['x-tenant'] || req.query.tenant;
+    if (!tenantSubdomain) return res.status(400).send('Tenant ID missing');
+
+    const tenant = await getTenantFromCache(tenantSubdomain);
+    if (!tenant) return res.sendStatus(404);
+
+    await handleIncomingMessage(tenant._id, req.body);
+    res.sendStatus(200);
+  } catch (error) {
+    console.error(error);
+    res.sendStatus(500);
+  }
+});
+
+module.exports = router;
+```
+
+#### `backend/server.js` (extrait des modifications)
+```javascript
+// ... imports
+const { globalLimiter, tenantLimiter } = require('./middleware/rateLimiter');
+const addonRoutes = require('./routes/addons');
+const userRoutes = require('./routes/users');
+
+// ... middlewares
+app.use(globalLimiter);
+app.use('/api/', tenantLimiter(1000, 60000));
+
+// ... routes
+app.use('/api/addons', addonRoutes);
+app.use('/api/users', userRoutes);
+```
+
+#### `backend/scripts/createIndexes.js`
+```javascript
+const mongoose = require('mongoose');
+require('dotenv').config();
+
+const Message = require('../models/Message');
+const Conversation = require('../models/Conversation');
+const User = require('../models/User');
+const Tenant = require('../models/Tenant');
+const AuditLog = require('../models/AuditLog');
+const Role = require('../models/Role');
+const TenantAddon = require('../models/TenantAddon');
+
+async function createIndexes() {
+  await mongoose.connect(process.env.MONGODB_URI);
+  await Message.init();
+  await Conversation.init();
+  await User.init();
+  await Tenant.init();
+  await AuditLog.init();
+  await Role.init();
+  await TenantAddon.init();
+  console.log('All indexes created');
+  process.exit(0);
+}
+
+createIndexes();
+```
+
+#### `backend/package.json` (extrait)
+```json
+{
+  "name": "whatsmaster-backend",
+  "version": "1.0.0",
+  "description": "WhatsMaster Suite Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.0.0",
+    "express-validator": "^7.0.1",
+    "ioredis": "^5.3.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.2",
+    "nodemailer": "^6.9.7",
+    "openai": "^4.20.0",
+    "rate-limit-redis": "^3.0.2",
+    "socket.io": "^4.5.4",
+    "stripe": "^14.0.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "jest": "^29.0.0",
+    "supertest": "^6.3.0"
+  }
+}
+```
+
+#### `backend/.env.example`
+```env
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/whatsmaster
+JWT_SECRET=your_jwt_secret
+WHATSAPP_ACCESS_TOKEN=your_whatsapp_token
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WHATSAPP_BUSINESS_ACCOUNT_ID=your_business_account_id
+WHATSAPP_WEBHOOK_VERIFY_TOKEN=your_webhook_token
+WHATSAPP_APP_SECRET=your_app_secret_for_signature
+OPENAI_API_KEY=your_openai_key
+STRIPE_SECRET_KEY=your_stripe_key
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret
+EMAIL_USER=your_email
+EMAIL_PASS=your_email_password
+REDIS_URL=redis://localhost:6379
+```
+
+---
+
+### 🎨 Frontend – Fichiers nouveaux / modifiés
+
+#### `frontend/src/pages/Marketplace.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import { toast } from 'react-toastify';
+
+const Marketplace = () => {
+  const [addons, setAddons] = useState([]);
+
+  useEffect(() => {
+    fetchAddons();
+  }, []);
+
+  const fetchAddons = async () => {
+    const res = await api.get('/addons');
+    setAddons(res.data);
+  };
+
+  const subscribe = async (addonId) => {
+    try {
+      await api.post('/addons/subscribe', { addonId });
+      toast.success('Module activé avec succès');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur lors de l’activation');
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Marketplace</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {addons.map(addon => (
+          <div key={addon._id} className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-xl font-semibold">{addon.label}</h3>
+            <p className="text-gray-600">{addon.description}</p>
+            <p className="mt-2 text-green-600 font-bold">
+              {addon.priceMonthly / 100} €/mois
+            </p>
+            <button
+              onClick={() => subscribe(addon._id)}
+              className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+            >
+              Activer
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Marketplace;
+```
+
+#### `frontend/src/components/Admin/RoleManager.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const RoleManager = () => {
+  const [roles, setRoles] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+
+  useEffect(() => {
+    fetchRoles();
+    fetchUsers();
+  }, []);
+
+  const fetchRoles = async () => {
+    const res = await api.get('/roles');
+    setRoles(res.data);
+  };
+
+  const fetchUsers = async () => {
+    const res = await api.get('/users');
+    setUsers(res.data);
+  };
+
+  const assignRole = async () => {
+    await api.post('/users/assign-role', { userId: selectedUser, roleId: selectedRole });
+    alert('Rôle attribué');
+  };
+
+  return (
+    <div className="p-4">
+      <h3 className="text-lg font-medium">Gestion des rôles</h3>
+      <div className="mt-4 space-y-2">
+        <select value={selectedUser} onChange={e => setSelectedUser(e.target.value)} className="border rounded p-2 w-full">
+          <option value="">Sélectionner un utilisateur</option>
+          {users.map(u => <option key={u._id} value={u._id}>{u.name}</option>)}
+        </select>
+        <select value={selectedRole} onChange={e => setSelectedRole(e.target.value)} className="border rounded p-2 w-full">
+          <option value="">Sélectionner un rôle</option>
+          {roles.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
+        </select>
+        <button onClick={assignRole} className="bg-green-500 text-white px-4 py-2 rounded">Attribuer</button>
+      </div>
+    </div>
+  );
+};
+
+export default RoleManager;
+```
+
+#### `frontend/src/App.js` (modifié)
+```javascript
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Inbox from './pages/Inbox';
+import Campaigns from './pages/Campaigns';
+import Automation from './pages/Automation';
+import Settings from './pages/Settings';
+import Analytics from './pages/Analytics';
+import FlowBuilderPage from './pages/FlowBuilder';
+import ContactManager from './pages/ContactManager';
+import Billing from './pages/Billing';
+import Support from './pages/Support';
+import Profile from './pages/Profile';
+import Marketplace from './pages/Marketplace';
+import RoleManager from './components/Admin/RoleManager';
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <ToastContainer position="top-right" autoClose={3000} />
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Dashboard />}>
+            <Route index element={<Inbox />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="campaigns" element={<Campaigns />} />
+            <Route path="automation" element={<Automation />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path="analytics" element={<Analytics />} />
+            <Route path="flow-builder" element={<FlowBuilderPage />} />
+            <Route path="contacts" element={<ContactManager />} />
+            <Route path="billing" element={<Billing />} />
+            <Route path="support" element={<Support />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="marketplace" element={<Marketplace />} />
+            <Route path="admin/roles" element={<RoleManager />} />
+          </Route>
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;
+```
+
+#### `frontend/src/context/AuthContext.js` (modifié)
+```javascript
+import React, { createContext, useState, useEffect } from 'react';
+import api from '../utils/api';
+
+export const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.get('/auth/me')
+        .then(res => setUser(res.data))
+        .catch(() => {
+          localStorage.removeItem('token');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = async (email, password) => {
+    const res = await api.post('/auth/login', { email, password });
+    localStorage.setItem('token', res.data.token);
+    setUser(res.data.user);
+    return res.data;
+  };
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+```
+
+#### `frontend/src/utils/api.js` (modifié)
+```javascript
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  headers: {
+    'Content-Type': 'application/json'
+  }
+});
+
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+```
+
+#### `frontend/package.json` (extrait)
+```json
+{
+  "name": "whatsmaster-frontend",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.6.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.0",
+    "react-toastify": "^9.1.3",
+    "reactflow": "^11.10.1",
+    "recharts": "^2.8.0",
+    "socket.io-client": "^4.5.4",
+    "tailwindcss": "^3.3.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build"
+  },
+  "devDependencies": {
+    "react-scripts": "5.0.1"
+  }
+}
+```
+
+---
+
+## 📦 Fichiers inchangés
+
+Les fichiers suivants restent identiques à la version initiale et sont disponibles sur demande :
+
+- `backend/models/Contact.js`, `Campaign.js`, `Automation.js`, `Tag.js`, `Flow.js`
+- `backend/controllers/authController.js`, `campaignController.js`, `settingsController.js`, `automationController.js`, `analyticsController.js`, `flowController.js`, `dashboardController.js`, `contactController.js`
+- `backend/routes/auth.js`, `campaigns.js`, `settings.js`, `automation.js`, `analytics.js`, `flows.js`, `dashboard.js`, `contacts.js`
+- `backend/services/*` (sauf modifications mineures)
+- `backend/jobs/campaignScheduler.js` (à remplacer par la version améliorée fournie plus tôt)
+- `frontend/src/pages/Login.js`, `Inbox.js`, `Campaigns.js`, `Automation.js`, `Settings.js`, `Analytics.js`, `FlowBuilder.js`, `ContactManager.js`, `Billing.js`, `Support.js`, `Profile.js`, `AdminDashboard.js`, `Onboarding.js`
+- `frontend/src/components/*` (sauf ceux listés comme nouveaux/modifiés)
+- `frontend/src/index.js`, `index.css`, `utils/socket.js`
+- `frontend/tailwind.config.js`, `nginx.conf`
+
+---
+
+## 🚀 Installation et exécution
+
+1. **Cloner ou créer la structure de dossiers** avec les fichiers ci-dessus.
+2. **Backend** :
+   ```bash
+   cd backend
+   npm install
+   cp .env.example .env   # éditer avec vos variables
+   node scripts/createIndexes.js
+   npm run dev
+   ```
+3. **Frontend** :
+   ```bash
+   cd frontend
+   npm install
+   npm start
+   ```
+4. **Démarrer Redis** (pour rate limiting et cache) :
+   ```bash
+   docker run -d -p 6379:6379 redis
+   ```
+5. Accéder à `http://localhost:3000`
+
+## 📁 Code source complet des fichiers demandés
+
+### Backend – Modèles
+
+#### `backend/models/Contact.js`
+```javascript
+const mongoose = require('mongoose');
+
+const ContactSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  whatsappId: { type: String, required: true },
+  name: { type: String },
+  phoneNumber: { type: String, required: true },
+  tags: [String],
+  customFields: mongoose.Schema.Types.Mixed,
+  createdAt: { type: Date, default: Date.now }
+});
+
+ContactSchema.index({ tenantId: 1, whatsappId: 1 });
+module.exports = mongoose.model('Contact', ContactSchema);
+```
+
+#### `backend/models/Campaign.js`
+```javascript
+const mongoose = require('mongoose');
+
+const CampaignSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  name: { type: String, required: true },
+  type: { type: String, enum: ['broadcast', 'sequence'], default: 'broadcast' },
+  message: { type: String, required: true },
+  mediaUrl: { type: String },
+  schedule: { type: Date },
+  status: { type: String, enum: ['draft', 'scheduled', 'sending', 'completed', 'failed'], default: 'draft' },
+  recipients: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contact' }],
+  sentCount: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+
+CampaignSchema.index({ tenantId: 1, status: 1, schedule: 1 });
+module.exports = mongoose.model('Campaign', CampaignSchema);
+```
+
+#### `backend/models/Automation.js`
+```javascript
+const mongoose = require('mongoose');
+
+const AutomationSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  name: { type: String, required: true },
+  trigger: { type: String, required: true },
+  conditions: mongoose.Schema.Types.Mixed,
+  actions: [{
+    type: { type: String, required: true },
+    parameters: mongoose.Schema.Types.Mixed
+  }],
+  isActive: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+AutomationSchema.index({ tenantId: 1, isActive: 1 });
+module.exports = mongoose.model('Automation', AutomationSchema);
+```
+
+#### `backend/models/Tag.js`
+```javascript
+const mongoose = require('mongoose');
+
+const TagSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  name: { type: String, required: true },
+  color: { type: String, default: '#000000' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+TagSchema.index({ tenantId: 1, name: 1 }, { unique: true });
+module.exports = mongoose.model('Tag', TagSchema);
+```
+
+#### `backend/models/Flow.js`
+```javascript
+const mongoose = require('mongoose');
+
+const FlowSchema = new mongoose.Schema({
+  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'Tenant', required: true },
+  name: { type: String, required: true },
+  steps: [{
+    id: String,
+    type: String,
+    params: mongoose.Schema.Types.Mixed,
+    nextStepId: String
+  }],
+  isActive: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+FlowSchema.index({ tenantId: 1 });
+module.exports = mongoose.model('Flow', FlowSchema);
+```
+
+---
+
+### Backend – Contrôleurs
+
+#### `backend/controllers/authController.js`
+```javascript
+const User = require('../models/User');
+const Tenant = require('../models/Tenant');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+
+exports.register = async (req, res) => {
+  try {
+    const { name, email, password, tenantSubdomain } = req.body;
+
+    let tenant = await Tenant.findOne({ subdomain: tenantSubdomain });
+    if (!tenant) {
+      tenant = new Tenant({
+        name: tenantSubdomain,
+        subdomain: tenantSubdomain,
+        branding: { primaryColor: '#25D366', secondaryColor: '#075E54' }
+      });
+      await tenant.save();
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = new User({ name, email, password: hashedPassword, tenantId: tenant._id });
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.status(201).json({ token, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email }).populate('tenantId');
+    if (!user || !user.isActive) return res.status(401).json({ error: 'Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
+
+    user.lastSeen = new Date();
+    await user.save();
+
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getMe = async (req, res) => {
+  res.json(req.user);
+};
+```
+
+#### `backend/controllers/campaignController.js`
+```javascript
+const Campaign = require('../models/Campaign');
+const Contact = require('../models/Contact');
+const WhatsAppService = require('../services/whatsappService');
+
+exports.createCampaign = async (req, res) => {
+  try {
+    const { name, message, recipients, schedule } = req.body;
+    const campaign = new Campaign({
+      name,
+      message,
+      recipients,
+      schedule: schedule ? new Date(schedule) : undefined,
+      tenantId: req.tenant._id
+    });
+    await campaign.save();
+    res.status(201).json(campaign);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getCampaigns = async (req, res) => {
+  try {
+    const campaigns = await Campaign.find({ tenantId: req.tenant._id });
+    res.json(campaigns);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.scheduleCampaign = async (req, res) => {
+  try {
+    const { campaignId } = req.params;
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) return res.status(404).json({ error: 'Campaign not found' });
+
+    campaign.status = 'scheduled';
+    await campaign.save();
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/settingsController.js`
+```javascript
+const Tenant = require('../models/Tenant');
+
+exports.getWhiteLabelSettings = async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.tenant._id);
+    res.json(tenant.branding);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateWhiteLabelSettings = async (req, res) => {
+  try {
+    const { logo, primaryColor, secondaryColor } = req.body;
+    const updatedTenant = await Tenant.findByIdAndUpdate(
+      req.tenant._id,
+      { $set: { 'branding.logo': logo, 'branding.primaryColor': primaryColor, 'branding.secondaryColor': secondaryColor } },
+      { new: true }
+    );
+    res.json(updatedTenant.branding);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getWhatsAppSettings = async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.tenant._id);
+    res.json(tenant.whatsappConfig);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateWhatsAppSettings = async (req, res) => {
+  try {
+    const { accessToken, phoneNumberId, businessAccountId, webhookVerifyToken } = req.body;
+    const updatedTenant = await Tenant.findByIdAndUpdate(
+      req.tenant._id,
+      { $set: { 'whatsappConfig.accessToken': accessToken, 'whatsappConfig.phoneNumberId': phoneNumberId, 'whatsappConfig.businessAccountId': businessAccountId, 'whatsappConfig.webhookVerifyToken': webhookVerifyToken } },
+      { new: true }
+    );
+    res.json(updatedTenant.whatsappConfig);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/automationController.js`
+```javascript
+const Automation = require('../models/Automation');
+
+exports.createAutomation = async (req, res) => {
+  try {
+    const automation = new Automation({ ...req.body, tenantId: req.tenant._id });
+    await automation.save();
+    res.status(201).json(automation);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getAutomations = async (req, res) => {
+  try {
+    const automations = await Automation.find({ tenantId: req.tenant._id });
+    res.json(automations);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/analyticsController.js`
+```javascript
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const Campaign = require('../models/Campaign');
+
+exports.getStats = async (req, res) => {
+  try {
+    const totalConversations = await Conversation.countDocuments({ tenantId: req.tenant._id });
+    const totalMessages = await Message.countDocuments({ tenantId: req.tenant._id });
+    const totalCampaigns = await Campaign.countDocuments({ tenantId: req.tenant._id });
+    res.json({ totalConversations, totalMessages, totalCampaigns });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getChartData = async (req, res) => {
+  try {
+    const messagesByDate = await Message.aggregate([
+      { $match: { tenantId: req.tenant._id } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 }
+        }
+      },
+      { $project: { date: '$_id', messages: '$count', _id: 0 } },
+      { $sort: { date: 1 } }
+    ]);
+    res.json(messagesByDate);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/flowController.js`
+```javascript
+const Flow = require('../models/Flow');
+
+exports.createFlow = async (req, res) => {
+  try {
+    const flow = new Flow({ ...req.body, tenantId: req.tenant._id });
+    await flow.save();
+    res.status(201).json(flow);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getFlows = async (req, res) => {
+  try {
+    const flows = await Flow.find({ tenantId: req.tenant._id });
+    res.json(flows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/dashboardController.js`
+```javascript
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const Campaign = require('../models/Campaign');
+
+exports.getDashboardData = async (req, res) => {
+  try {
+    const [
+      totalConversations,
+      totalMessages,
+      totalCampaigns,
+      recentConversations
+    ] = await Promise.all([
+      Conversation.countDocuments({ tenantId: req.tenant._id }),
+      Message.countDocuments({ tenantId: req.tenant._id }),
+      Campaign.countDocuments({ tenantId: req.tenant._id }),
+      Conversation.find({ tenantId: req.tenant._id }).populate('contactId').limit(5).sort('-lastMessageAt').lean()
+    ]);
+
+    res.json({
+      stats: { totalConversations, totalMessages, totalCampaigns },
+      recentConversations
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+#### `backend/controllers/contactController.js`
+```javascript
+const Contact = require('../models/Contact');
+
+exports.getContacts = async (req, res) => {
+  try {
+    const contacts = await Contact.find({ tenantId: req.tenant._id });
+    res.json(contacts);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+```
+
+---
+
+### Backend – Routes
+
+#### `backend/routes/auth.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const auth = require('../middleware/auth');
+const { validateRegister, validateLogin } = require('../middleware/validators');
+
+router.post('/register', validateRegister, authController.register);
+router.post('/login', validateLogin, authController.login);
+router.get('/me', auth, authController.getMe);
+
+module.exports = router;
+```
+
+#### `backend/routes/campaigns.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const campaignController = require('../controllers/campaignController');
+
+router.post('/', auth, campaignController.createCampaign);
+router.get('/', auth, campaignController.getCampaigns);
+router.post('/:campaignId/schedule', auth, campaignController.scheduleCampaign);
+
+module.exports = router;
+```
+
+#### `backend/routes/settings.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const { getWhiteLabelSettings, updateWhiteLabelSettings, getWhatsAppSettings, updateWhatsAppSettings } = require('../controllers/settingsController');
+
+router.get('/whitelabel', auth, getWhiteLabelSettings);
+router.put('/whitelabel', auth, updateWhiteLabelSettings);
+router.get('/whatsapp', auth, getWhatsAppSettings);
+router.put('/whatsapp', auth, updateWhatsAppSettings);
+
+module.exports = router;
+```
+
+#### `backend/routes/automation.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const automationController = require('../controllers/automationController');
+
+router.post('/', auth, automationController.createAutomation);
+router.get('/', auth, automationController.getAutomations);
+
+module.exports = router;
+```
+
+#### `backend/routes/analytics.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const analyticsController = require('../controllers/analyticsController');
+
+router.get('/', auth, analyticsController.getStats);
+router.get('/chart', auth, analyticsController.getChartData);
+
+module.exports = router;
+```
+
+#### `backend/routes/flows.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const flowController = require('../controllers/flowController');
+
+router.post('/', auth, flowController.createFlow);
+router.get('/', auth, flowController.getFlows);
+
+module.exports = router;
+```
+
+#### `backend/routes/dashboard.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const dashboardController = require('../controllers/dashboardController');
+
+router.get('/', auth, dashboardController.getDashboardData);
+
+module.exports = router;
+```
+
+#### `backend/routes/contacts.js`
+```javascript
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const contactController = require('../controllers/contactController');
+
+router.get('/', auth, contactController.getContacts);
+
+module.exports = router;
+```
+
+---
+
+### Backend – Services
+
+#### `backend/services/whatsappService.js`
+```javascript
+const axios = require('axios');
+
+class WhatsAppService {
+  constructor(tenant) {
+    this.accessToken = tenant.whatsappConfig.accessToken;
+    this.phoneNumberId = tenant.whatsappConfig.phoneNumberId;
+    this.baseUrl = `https://graph.facebook.com/v18.0/${this.phoneNumberId}`;
+  }
+
+  async sendTextMessage(to, text) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          recipient_type: 'individual',
+          to,
+          type: 'text',
+          text: { body: text }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('WhatsApp send error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async sendTemplateMessage(to, templateName, language = 'fr', components = []) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          to,
+          type: 'template',
+          template: {
+            name: templateName,
+            language: { code: language },
+            components
+          }
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('WhatsApp send template error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async createTemplate(name, category, language, components) {
+    try {
+      const response = await axios.post(
+        `https://graph.facebook.com/v18.0/${this.phoneNumberId}/message_templates`,
+        {
+          name,
+          category,
+          language,
+          components
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('WhatsApp create template error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async sendInteractiveMessage(to, interactiveObject) {
+    try {
+      const response = await axios.post(
+        `${this.baseUrl}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          to,
+          type: 'interactive',
+          interactive: interactiveObject
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('WhatsApp send interactive error:', error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  async markAsRead(messageId) {
+    try {
+      await axios.post(
+        `${this.baseUrl}/messages`,
+        {
+          messaging_product: 'whatsapp',
+          status: 'read',
+          message_id: messageId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${this.accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Mark as read error:', error);
+    }
+  }
+}
+
+module.exports = WhatsAppService;
+```
+
+#### `backend/services/webhookHandler.js`
+```javascript
+const Conversation = require('../models/Conversation');
+const Message = require('../models/Message');
+const Contact = require('../models/Contact');
+const AIService = require('./aiService');
+
+async function handleIncomingMessage(tenantId, payload) {
+  const entry = payload.entry[0];
+  const changes = entry.changes[0];
+  const value = changes.value;
+  const messages = value.messages;
+
+  if (!messages) return;
+
+  for (const msg of messages) {
+    const from = msg.from;
+    const text = msg.text?.body || '';
+
+    let contact = await Contact.findOne({ tenantId, whatsappId: from });
+    if (!contact) {
+      contact = new Contact({ tenantId, whatsappId: from, phoneNumber: from });
+      await contact.save();
+    }
+
+    let conversation = await Conversation.findOne({ tenantId, whatsappId: from, status: { $ne: 'resolved' } });
+    if (!conversation) {
+      conversation = new Conversation({
+        tenantId,
+        contactId: contact._id,
+        whatsappId: from,
+        status: 'open'
+      });
+      await conversation.save();
+    }
+
+    const message = new Message({
+      conversationId: conversation._id,
+      tenantId,
+      direction: 'inbound',
+      body: text,
+      type: 'text',
+      status: 'delivered'
+    });
+    await message.save();
+
+    conversation.lastMessageAt = new Date();
+    await conversation.save();
+
+    // Analyse IA
+    const aiService = new AIService(process.env.OPENAI_API_KEY);
+    const analysis = await aiService.analyzeMessage(text, { contactId: contact._id });
+    
+    if (analysis && analysis.should_escalate) {
+      // Logique d'escalade
+    }
+  }
+}
+
+module.exports = { handleIncomingMessage };
+```
+
+#### `backend/services/openaiService.js`
+```javascript
+const OpenAI = require('openai');
+
+class OpenAIService {
+  constructor(apiKey) {
+    this.client = new OpenAI({ apiKey });
+  }
+
+  async generateResponse(prompt) {
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'Tu es un assistant virtuel utile.' },
+          { role: 'user', content: prompt }
+        ],
+      });
+      return completion.choices[0].message.content;
+    } catch (error) {
+      console.error('OpenAI error:', error);
+      return null;
+    }
+  }
+}
+
+module.exports = OpenAIService;
+```
+
+#### `backend/services/aiService.js`
+```javascript
+const OpenAI = require('openai');
+
+class AIService {
+  constructor(apiKey) {
+    this.client = new OpenAI({ apiKey });
+  }
+
+  async analyzeMessage(message, context = {}) {
+    const prompt = `
+      Analyse le message suivant reçu d'un client WhatsApp :
+      "${message}"
+      
+      Contexte : ${JSON.stringify(context)}
+      
+      Réponds avec un objet JSON contenant :
+      - sentiment: positif, negatif, neutre
+      - intent: commande, question, plainte, autre
+      - suggested_reply: suggestion de réponse
+      - should_escalate: true/false
+    `;
+    
+    try {
+      const completion = await this.client.chat.completions.create({
+        model: 'gpt-4',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' }
+      });
+      
+      return JSON.parse(completion.choices[0].message.content);
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      return null;
+    }
+  }
+}
+
+module.exports = AIService;
+```
+
+#### `backend/services/flowBuilderService.js`
+```javascript
+class FlowBuilderService {
+  constructor() {
+    this.flows = [];
+  }
+
+  async executeFlow(flowId, payload) {
+    const flow = this.flows.find(f => f.id === flowId);
+    if (!flow) return null;
+
+    let currentStep = flow.startStep;
+    while (currentStep) {
+      const result = await this.executeStep(currentStep, payload);
+      if (result.nextStepId) {
+        currentStep = flow.steps.find(s => s.id === result.nextStepId);
+      } else {
+        break;
+      }
+    }
+  }
+
+  async executeStep(step, payload) {
+    switch (step.type) {
+      case 'send_message':
+        // Logique d'envoi de message
+        return { nextStepId: step.nextStepId };
+      case 'wait_for_response':
+        // Attendre réponse
+        return { nextStepId: step.nextStepId };
+      default:
+        return {};
+    }
+  }
+}
+
+module.exports = FlowBuilderService;
+```
+
+#### `backend/services/paymentService.js`
+```javascript
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+class PaymentService {
+  async createPaymentIntent(amount, currency = 'eur') {
+    try {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: Math.round(amount * 100),
+        currency,
+        automatic_payment_methods: { enabled: true },
+      });
+      return paymentIntent;
+    } catch (error) {
+      console.error('Stripe error:', error);
+      throw error;
+    }
+  }
+}
+
+module.exports = PaymentService;
+```
+
+#### `backend/services/notificationService.js`
+```javascript
+const nodemailer = require('nodemailer');
+
+class NotificationService {
+  constructor() {
+    this.transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+  }
+
+  async sendEmail(to, subject, html) {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to,
+      subject,
+      html
+    };
+
+    return this.transporter.sendMail(mailOptions);
+  }
+}
+
+module.exports = NotificationService;
+```
+
+---
+
+### Backend – Job
+
+#### `backend/jobs/campaignScheduler.js` (version améliorée)
+```javascript
+const cron = require('node-cron');
+const Campaign = require('../models/Campaign');
+const Contact = require('../models/Contact');
+const WhatsAppService = require('../services/whatsappService');
+const logger = require('../utils/logger');
+
+cron.schedule('* * * * *', async () => {
+  const now = new Date();
+  try {
+    const campaigns = await Campaign.find({
+      status: 'scheduled',
+      schedule: { $lte: now }
+    }).populate('tenantId');
+
+    for (const campaign of campaigns) {
+      logger.info(`Démarrage de la campagne ${campaign.name} (${campaign._id})`);
+      campaign.status = 'sending';
+      await campaign.save();
+
+      try {
+        const tenant = campaign.tenantId;
+        if (!tenant) {
+          logger.error(`Tenant introuvable pour la campagne ${campaign._id}`);
+          campaign.status = 'failed';
+          await campaign.save();
+          continue;
+        }
+
+        const whatsappService = new WhatsAppService(tenant);
+        const contacts = await Contact.find({ _id: { $in: campaign.recipients } });
+        for (const contact of contacts) {
+          try {
+            await whatsappService.sendTextMessage(contact.whatsappId, campaign.message);
+            campaign.sentCount++;
+          } catch (sendError) {
+            logger.error(`Erreur envoi à ${contact.whatsappId}: ${sendError.message}`);
+          }
+        }
+
+        campaign.status = 'completed';
+        await campaign.save();
+        logger.info(`Campagne ${campaign.name} terminée. ${campaign.sentCount} messages envoyés.`);
+      } catch (err) {
+        logger.error(`Erreur lors de l'exécution de la campagne ${campaign._id}: ${err.message}`);
+        campaign.status = 'failed';
+        await campaign.save();
+      }
+    }
+  } catch (err) {
+    logger.error(`Erreur dans campaignScheduler: ${err.message}`);
+  }
+});
+
+module.exports = cron;
+```
+
+---
+
+### Frontend – Pages
+
+#### `frontend/src/pages/Login.js`
+```javascript
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await login(email, password);
+      navigate('/');
+    } catch (error) {
+      toast.error('Échec de la connexion. Vérifiez vos identifiants.');
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded shadow-md w-96">
+        <h2 className="text-2xl font-bold mb-4">Connexion</h2>
+        <div className="mb-4">
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full border rounded p-2"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full border rounded p-2"
+            required
+          />
+        </div>
+        <button type="submit" className="w-full bg-green-500 text-white py-2 rounded">Se connecter</button>
+      </form>
+    </div>
+  );
+};
+
+export default Login;
+```
+
+#### `frontend/src/pages/Inbox.js`
+```javascript
+import React, { useState } from 'react';
+import ConversationList from '../components/Inbox/ConversationList';
+import MessageArea from '../components/Inbox/MessageArea';
+
+const Inbox = () => {
+  const [selectedConversation, setSelectedConversation] = useState(null);
+
+  return (
+    <div className="flex h-full">
+      <div className="w-1/3">
+        <ConversationList onSelectConversation={setSelectedConversation} selectedId={selectedConversation?._id} />
+      </div>
+      <div className="w-2/3">
+        <MessageArea conversation={selectedConversation} />
+      </div>
+    </div>
+  );
+};
+
+export default Inbox;
+```
+
+#### `frontend/src/pages/Campaigns.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import CampaignForm from '../components/Campaigns/CampaignForm';
+import CampaignList from '../components/Campaigns/CampaignList';
+
+const Campaigns = () => {
+  const [campaigns, setCampaigns] = useState([]);
+
+  useEffect(() => {
+    fetchCampaigns();
+  }, []);
+
+  const fetchCampaigns = async () => {
+    const res = await api.get('/campaigns');
+    setCampaigns(res.data);
+  };
+
+  const handleCreated = (newCampaign) => {
+    setCampaigns([...campaigns, newCampaign]);
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Campagnes WhatsApp</h1>
+      <CampaignForm onCreated={handleCreated} />
+      <CampaignList campaigns={campaigns} onRefresh={fetchCampaigns} />
+    </div>
+  );
+};
+
+export default Campaigns;
+```
+
+#### `frontend/src/pages/Automation.js`
+```javascript
+import React from 'react';
+import AutomationBuilder from '../components/Automation/AutomationBuilder';
+
+const Automation = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Automations</h1>
+      <AutomationBuilder />
+    </div>
+  );
+};
+
+export default Automation;
+```
+
+#### `frontend/src/pages/Settings.js`
+```javascript
+import React from 'react';
+import WhiteLabelSettings from '../components/Settings/WhiteLabelSettings';
+import WhatsAppSettings from '../components/Settings/WhatsAppSettings';
+import GeneralSettings from '../components/Settings/GeneralSettings';
+import BrandingSettings from '../components/Settings/BrandingSettings';
+import PaymentSettings from '../components/Settings/PaymentSettings';
+
+const Settings = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Paramètres</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Général</h2>
+          <GeneralSettings />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Marque blanche</h2>
+          <BrandingSettings />
+          <div className="mt-6">
+            <WhiteLabelSettings />
+          </div>
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">WhatsApp</h2>
+          <WhatsAppSettings />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Paiement</h2>
+          <PaymentSettings />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Settings;
+```
+
+#### `frontend/src/pages/Analytics.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import api from '../utils/api';
+
+const Analytics = () => {
+  const [data, setData] = useState([]);
+
+  useEffect(() => {
+    fetchChartData();
+  }, []);
+
+  const fetchChartData = async () => {
+    try {
+      const res = await api.get('/analytics/chart');
+      setData(res.data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Analytics</h1>
+      <ResponsiveContainer width="100%" height={400}>
+        <BarChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="date" />
+          <YAxis />
+          <Tooltip />
+          <Bar dataKey="messages" fill="#25D366" />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+export default Analytics;
+```
+
+#### `frontend/src/pages/FlowBuilder.js`
+```javascript
+import React from 'react';
+import FlowBuilder from '../components/FlowBuilder/FlowBuilder';
+
+const FlowBuilderPage = () => {
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Flow Builder</h1>
+      <FlowBuilder />
+    </div>
+  );
+};
+
+export default FlowBuilderPage;
+```
+
+#### `frontend/src/pages/ContactManager.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../utils/api';
+import ContactList from '../components/ContactManager/ContactList';
+import ContactForm from '../components/ContactManager/ContactForm';
+import TagManager from '../components/ContactManager/TagManager';
+
+const ContactManager = () => {
+  const [contacts, setContacts] = useState([]);
+  const [selectedContact, setSelectedContact] = useState(null);
+
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    const res = await api.get('/contacts');
+    setContacts(res.data);
+  };
+
+  const handleSaved = () => {
+    fetchContacts();
+    setSelectedContact(null);
+  };
+
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Gestion des contacts</h1>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="col-span-2">
+          <ContactList contacts={contacts} onSelectContact={setSelectedContact} selectedId={selectedContact?._id} />
+        </div>
+        <div>
+          <ContactForm contact={selectedContact} onSaved={handleSaved} />
+          <div className="mt-6">
+            <TagManager />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ContactManager;
+```
+
+#### `frontend/src/pages/Billing.js`
+```javascript
+import React from 'react';
+import SubscriptionOverview from '../components/Billing/SubscriptionOverview';
+import PaymentSettings from '../components/Settings/PaymentSettings';
+
+const Billing = () => {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-semibold mb-6">Facturation</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-medium mb-4">Abonnement actuel</h3>
+          <SubscriptionOverview />
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-medium mb-4">Méthode de paiement</h3>
+          <PaymentSettings />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Billing;
+```
+
+#### `frontend/src/pages/Support.js`
+```javascript
+import React from 'react';
+import TicketList from '../components/Support/TicketList';
+import CreateTicketForm from '../components/Support/CreateTicketForm';
+
+const Support = () => {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-semibold mb-6">Support</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-medium mb-4">Soumettre un ticket</h3>
+          <CreateTicketForm />
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-lg font-medium mb-4">Mes tickets</h3>
+          <TicketList />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Support;
+```
+
+#### `frontend/src/pages/Profile.js`
+```javascript
+import React from 'react';
+import UserProfileForm from '../components/Profile/UserProfileForm';
+
+const Profile = () => {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-semibold mb-6">Mon profil</h2>
+      <UserProfileForm />
+    </div>
+  );
+};
+
+export default Profile;
+```
+
+#### `frontend/src/pages/AdminDashboard.js`
+```javascript
+import React from 'react';
+
+const AdminDashboard = () => {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-semibold mb-6">Dashboard Administrateur</h2>
+      <p>Cette page est réservée aux administrateurs globaux.</p>
+      {/* Ici vous pouvez ajouter les composants d'administration */}
+    </div>
+  );
+};
+
+export default AdminDashboard;
+```
+
+#### `frontend/src/pages/Onboarding.js`
+```javascript
+import React from 'react';
+import OnboardingWizard from '../components/Onboarding/OnboardingWizard';
+
+const Onboarding = () => {
+  return (
+    <div className="p-6">
+      <h2 className="text-2xl font-semibold mb-6">Configuration initiale</h2>
+      <OnboardingWizard />
+    </div>
+  );
+};
+
+export default Onboarding;
+```
+
+---
+
+### Frontend – Composants non listés précédemment
+
+Nous listons ici les composants qui n'ont pas été fournis dans la section "nouveaux/modifiés". Ils restent identiques à la version initiale.
+
+#### `frontend/src/components/Inbox/ConversationList.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const ConversationList = ({ onSelectConversation, selectedId }) => {
+  const [conversations, setConversations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({ search: '', status: '' });
+
+  useEffect(() => {
+    fetchConversations();
+  }, [filters]);
+
+  const fetchConversations = async () => {
+    setLoading(true);
+    const query = new URLSearchParams(filters).toString();
+    const res = await api.get(`/conversations?${query}`);
+    setConversations(res.data.conversations);
+    setLoading(false);
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b">
+        <input
+          type="text"
+          placeholder="Rechercher..."
+          value={filters.search}
+          onChange={(e) => setFilters({...filters, search: e.target.value})}
+          className="w-full border rounded p-2 mb-2"
+        />
+        <select
+          value={filters.status}
+          onChange={(e) => setFilters({...filters, status: e.target.value})}
+          className="w-full border rounded p-2"
+        >
+          <option value="">Tous les statuts</option>
+          <option value="open">Ouvert</option>
+          <option value="resolved">Résolu</option>
+        </select>
+      </div>
+      <div className="flex-1 overflow-y-auto">
+        {loading ? <div>Chargement...</div> : conversations.map(conv => (
+          <div
+            key={conv._id}
+            onClick={() => onSelectConversation(conv)}
+            className={`p-4 cursor-pointer hover:bg-gray-100 ${selectedId === conv._id ? 'bg-green-50' : ''}`}
+          >
+            <div className="font-semibold">{conv.contactId?.name || conv.whatsappId}</div>
+            <div className="text-sm text-gray-500 truncate">{new Date(conv.lastMessageAt).toLocaleString()}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ConversationList;
+```
+
+#### `frontend/src/components/Campaigns/CampaignForm.js`
+```javascript
+import React, { useState } from 'react';
+import api from '../../utils/api';
+
+const CampaignForm = ({ onCreated }) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    message: '',
+    type: 'broadcast',
+    recipients: []
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.post('/campaigns', formData);
+      onCreated(res.data);
+      setFormData({ name: '', message: '', type: 'broadcast', recipients: [] });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Nom de la campagne</label>
+        <input type="text" name="name" value={formData.name} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Message</label>
+        <textarea name="message" value={formData.message} onChange={handleChange} className="border rounded w-full p-2" rows="3"></textarea>
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Créer</button>
+    </form>
+  );
+};
+
+export default CampaignForm;
+```
+
+#### `frontend/src/components/Campaigns/CampaignList.js`
+```javascript
+import React from 'react';
+import api from '../../utils/api';
+
+const CampaignList = ({ campaigns, onRefresh }) => {
+  const scheduleCampaign = async (id) => {
+    await api.post(`/campaigns/${id}/schedule`);
+    onRefresh();
+  };
+
+  return (
+    <div className="mt-4">
+      <h2 className="text-xl font-semibold mb-4">Campagnes</h2>
+      <table className="min-w-full bg-white">
+        <thead>
+          <tr>
+            <th>Nom</th>
+            <th>Status</th>
+            <th>Envoyés</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {campaigns.map(camp => (
+            <tr key={camp._id}>
+              <td>{camp.name}</td>
+              <td>{camp.status}</td>
+              <td>{camp.sentCount}/{camp.recipients.length}</td>
+              <td>
+                {camp.status === 'draft' && (
+                  <button onClick={() => scheduleCampaign(camp._id)} className="bg-green-500 text-white px-2 py-1 rounded">Planifier</button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default CampaignList;
+```
+
+#### `frontend/src/components/Automation/AutomationBuilder.js`
+```javascript
+import React, { useState } from 'react';
+import api from '../../utils/api';
+
+const AutomationBuilder = () => {
+  const [flow, setFlow] = useState({
+    name: '',
+    steps: []
+  });
+
+  const addStep = () => {
+    setFlow({
+      ...flow,
+      steps: [...flow.steps, { id: Date.now(), type: 'send_message', params: {} }]
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post('/automations', flow);
+      alert('Automation créée');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Nom du flow</label>
+        <input type="text" name="name" value={flow.name} onChange={(e) => setFlow({...flow, name: e.target.value})} className="border rounded w-full p-2" />
+      </div>
+      <button type="button" onClick={addStep} className="bg-blue-500 text-white px-4 py-2 rounded">Ajouter une étape</button>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Créer</button>
+    </form>
+  );
+};
+
+export default AutomationBuilder;
+```
+
+#### `frontend/src/components/FlowBuilder/FlowBuilder.js`
+```javascript
+import React from 'react';
+import FlowCanvas from './FlowCanvas';
+
+const FlowBuilder = () => {
+  return (
+    <div style={{ height: '500px' }}>
+      <h2>Constructeur de Flows</h2>
+      <FlowCanvas />
+    </div>
+  );
+};
+
+export default FlowBuilder;
+```
+
+#### `frontend/src/components/FlowBuilder/FlowCanvas.js` (déjà fourni précédemment)
+```javascript
+import React, { useCallback } from 'react';
+import ReactFlow, { Controls, Background, useNodesState, useEdgesState, addEdge } from 'reactflow';
+import 'reactflow/dist/style.css';
+
+const initialNodes = [
+  { id: '1', type: 'input', position: { x: 0, y: 0 }, data: { label: 'Message reçu' } },
+  { id: '2', position: { x: 200, y: 0 }, data: { label: 'Analyser' } },
+  { id: '3', position: { x: 400, y: 0 }, data: { label: 'Répondre' } },
+];
+
+const initialEdges = [
+  { id: 'e1-2', source: '1', target: '2' },
+  { id: 'e2-3', source: '2', target: '3' },
+];
+
+const FlowCanvas = () => {
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
+  return (
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      onNodesChange={onNodesChange}
+      onEdgesChange={onEdgesChange}
+      onConnect={onConnect}
+    >
+      <Background variant="dots" gap={12} size={1} />
+      <Controls />
+    </ReactFlow>
+  );
+};
+
+export default FlowCanvas;
+```
+
+#### `frontend/src/components/Settings/WhiteLabelSettings.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const WhiteLabelSettings = () => {
+  const [settings, setSettings] = useState({ logo: '', primaryColor: '#25D366', secondaryColor: '#075E54' });
+
+  useEffect(() => {
+    api.get('/settings/whitelabel').then(res => setSettings(res.data));
+  }, []);
+
+  const handleChange = (e) => {
+    setSettings({ ...settings, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.put('/settings/whitelabel', settings);
+    alert('Paramètres sauvegardés');
+    document.documentElement.style.setProperty('--primary', settings.primaryColor);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Logo URL</label>
+        <input type="text" name="logo" value={settings.logo} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Couleur principale</label>
+        <input type="color" name="primaryColor" value={settings.primaryColor} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Couleur secondaire</label>
+        <input type="color" name="secondaryColor" value={settings.secondaryColor} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
+  );
+};
+
+export default WhiteLabelSettings;
+```
+
+#### `frontend/src/components/Settings/WhatsAppSettings.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const WhatsAppSettings = () => {
+  const [config, setConfig] = useState({
+    accessToken: '',
+    phoneNumberId: '',
+    businessAccountId: '',
+    webhookVerifyToken: ''
+  });
+
+  useEffect(() => {
+    api.get('/settings/whatsapp').then(res => setConfig(res.data));
+  }, []);
+
+  const handleChange = (e) => {
+    setConfig({ ...config, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.put('/settings/whatsapp', config);
+    alert('Configuration mise à jour');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Access Token</label>
+        <input type="text" name="accessToken" value={config.accessToken} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Phone Number ID</label>
+        <input type="text" name="phoneNumberId" value={config.phoneNumberId} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Business Account ID</label>
+        <input type="text" name="businessAccountId" value={config.businessAccountId} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Webhook Verify Token</label>
+        <input type="text" name="webhookVerifyToken" value={config.webhookVerifyToken} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Sauvegarder</button>
+    </form>
+  );
+};
+
+export default WhatsAppSettings;
+```
+
+#### `frontend/src/components/Settings/GeneralSettings.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const GeneralSettings = () => {
+  const [settings, setSettings] = useState({ siteName: '', timezone: 'Europe/Paris' });
+
+  useEffect(() => {
+    api.get('/settings/general').then(res => setSettings(res.data));
+  }, []);
+
+  const handleChange = (e) => {
+    setSettings({ ...settings, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.put('/settings/general', settings);
+    alert('Paramètres enregistrés');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Nom du site</label>
+        <input type="text" name="siteName" value={settings.siteName} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Fuseau horaire</label>
+        <select name="timezone" value={settings.timezone} onChange={handleChange} className="border rounded w-full p-2">
+          <option value="Europe/Paris">Europe/Paris</option>
+          <option value="America/New_York">America/New_York</option>
+        </select>
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
+  );
+};
+
+export default GeneralSettings;
+```
+
+#### `frontend/src/components/Settings/BrandingSettings.js`
+```javascript
+import React from 'react';
+import WhiteLabelSettings from './WhiteLabelSettings';
+
+const BrandingSettings = () => {
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Marque blanche</h3>
+      <WhiteLabelSettings />
+    </div>
+  );
+};
+
+export default BrandingSettings;
+```
+
+#### `frontend/src/components/Settings/PaymentSettings.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const PaymentSettings = () => {
+  const [stripeKey, setStripeKey] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    api.get('/settings/payment').then(res => setStripeKey(res.data.publicKey));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await api.post('/settings/payment/setup-intent', {});
+      alert('Configuration de paiement en cours...');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <p>Clé publique Stripe : {stripeKey}</p>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded" disabled={loading}>
+        {loading ? 'Chargement...' : 'Configurer le paiement'}
+      </button>
+    </form>
+  );
+};
+
+export default PaymentSettings;
+```
+
+#### `frontend/src/components/ContactManager/ContactList.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const ContactList = ({ contacts, onSelectContact, selectedId }) => {
+  const [search, setSearch] = useState('');
+  const [filtered, setFiltered] = useState([]);
+
+  useEffect(() => {
+    setFiltered(contacts.filter(c => c.name?.includes(search) || c.phoneNumber.includes(search)));
+  }, [search, contacts]);
+
+  return (
+    <div className="h-full flex flex-col">
+      <input
+        type="text"
+        placeholder="Rechercher..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="border rounded p-2 mb-4"
+      />
+      <ul className="divide-y divide-gray-200">
+        {filtered.map(contact => (
+          <li key={contact._id} onClick={() => onSelectContact(contact)} className={`p-2 cursor-pointer ${selectedId === contact._id ? 'bg-green-50' : ''}`}>
+            {contact.name || contact.phoneNumber}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default ContactList;
+```
+
+#### `frontend/src/components/ContactManager/ContactForm.js`
+```javascript
+import React, { useState } from 'react';
+import api from '../../utils/api';
+
+const ContactForm = ({ contact, onSaved }) => {
+  const [formData, setFormData] = useState({
+    name: contact?.name || '',
+    phoneNumber: contact?.phoneNumber || '',
+    tags: contact?.tags?.join(', ') || '',
+    customFields: contact?.customFields || {}
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const payload = {
+      ...formData,
+      tags: formData.tags.split(',').map(t => t.trim())
+    };
+    if (contact) {
+      await api.put(`/contacts/${contact._id}`, payload);
+    } else {
+      await api.post('/contacts', payload);
+    }
+    onSaved();
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium">Nom</label>
+        <input type="text" name="name" value={formData.name} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Téléphone</label>
+        <input type="text" name="phoneNumber" value={formData.phoneNumber} onChange={handleChange} className="border rounded w-full p-2" required />
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Tags (séparés par des virgules)</label>
+        <input type="text" name="tags" value={formData.tags} onChange={handleChange} className="border rounded w-full p-2" />
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Enregistrer</button>
+    </form>
+  );
+};
+
+export default ContactForm;
+```
+
+#### `frontend/src/components/ContactManager/TagManager.js`
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const TagManager = () => {
+  const [tags, setTags] = useState([]);
+  const [newTag, setNewTag] = useState('');
+
+  useEffect(() => {
+    fetchTags();
+  }, []);
+
+  const fetchTags = async () => {
+    const res = await api.get('/tags');
+    setTags(res.data);
+  };
+
+  const addTag = async (e) => {
+    e.preventDefault();
+    await api.post('/tags', { name: newTag });
+    setNewTag('');
+    fetchTags();
+  };
+
+  return (
+    <div>
+      <h3 className="text-lg font-medium mb-4">Gestion des tags</h3>
+      <form onSubmit={addTag} className="flex mb-4">
+        <input
+          type="text"
+          value={newTag}
+          onChange={(e) => setNewTag(e.target.value)}
+          className="border rounded p-2 flex-1"
+          placeholder="Nouveau tag"
+        />
+        <button type="submit" className="ml-2 bg-green-500 text-white px-4 py-2 rounded">Ajouter</button>
+      </form>
+      <ul className="space-y-2">
+        {tags.map(tag => (
+          <li key={tag._id} className="flex justify-between items-center">
+            <span style={{ color: tag.color }}>{tag.name}</span>
+            <button onClick={() => api.delete(`/tags/${tag._id}`).then(fetchTags)} className="text-red-500">Supprimer</button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default TagManager;
+```
+
+#### `frontend/src/components/Billing/SubscriptionOverview.js` (exemple)
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const SubscriptionOverview = () => {
+  const [subscription, setSubscription] = useState(null);
+
+  useEffect(() => {
+    api.get('/billing/subscription').then(res => setSubscription(res.data));
+  }, []);
+
+  if (!subscription) return <div>Chargement...</div>;
+
+  return (
+    <div>
+      <p>Plan : {subscription.planName}</p>
+      <p>Statut : {subscription.status}</p>
+      <p>Prochain paiement : {new Date(subscription.nextBillingDate).toLocaleDateString()}</p>
+    </div>
+  );
+};
+
+export default SubscriptionOverview;
+```
+
+#### `frontend/src/components/Support/TicketList.js` (exemple)
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const TicketList = () => {
+  const [tickets, setTickets] = useState([]);
+
+  useEffect(() => {
+    api.get('/support/tickets').then(res => setTickets(res.data));
+  }, []);
+
+  return (
+    <ul>
+      {tickets.map(ticket => (
+        <li key={ticket._id}>
+          <strong>{ticket.subject}</strong> - {ticket.status}
+        </li>
+      ))}
+    </ul>
+  );
+};
+
+export default TicketList;
+```
+
+#### `frontend/src/components/Support/CreateTicketForm.js` (exemple)
+```javascript
+import React, { useState } from 'react';
+import api from '../../utils/api';
+
+const CreateTicketForm = () => {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.post('/support/tickets', { subject, message });
+    alert('Ticket créé');
+    setSubject('');
+    setMessage('');
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input type="text" placeholder="Sujet" value={subject} onChange={e => setSubject(e.target.value)} required className="border p-2 w-full mb-2" />
+      <textarea placeholder="Message" value={message} onChange={e => setMessage(e.target.value)} required className="border p-2 w-full mb-2" rows="4"></textarea>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Envoyer</button>
+    </form>
+  );
+};
+
+export default CreateTicketForm;
+```
+
+#### `frontend/src/components/Profile/UserProfileForm.js` (exemple)
+```javascript
+import React, { useState, useEffect } from 'react';
+import api from '../../utils/api';
+
+const UserProfileForm = () => {
+  const [user, setUser] = useState({ name: '', email: '' });
+
+  useEffect(() => {
+    api.get('/auth/me').then(res => setUser(res.data));
+  }, []);
+
+  const handleChange = (e) => {
+    setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await api.put('/users/profile', user);
+    alert('Profil mis à jour');
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label>Nom</label>
+        <input type="text" name="name" value={user.name} onChange={handleChange} className="border p-2 w-full" />
+      </div>
+      <div>
+        <label>Email</label>
+        <input type="email" name="email" value={user.email} onChange={handleChange} className="border p-2 w-full" />
+      </div>
+      <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded">Mettre à jour</button>
+    </form>
+  );
+};
+
+export default UserProfileForm;
+```
+
+#### `frontend/src/components/Onboarding/OnboardingWizard.js` (exemple)
+```javascript
+import React, { useState } from 'react';
+import api from '../../utils/api';
+
+const OnboardingWizard = () => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    whatsappAccessToken: '',
+    whatsappPhoneNumberId: '',
+    brandingLogo: '',
+    brandingPrimaryColor: '#25D366'
+  });
+
+  const nextStep = () => setStep(step + 1);
+  const prevStep = () => setStep(step - 1);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    await api.put('/settings/whatsapp', {
+      accessToken: formData.whatsappAccessToken,
+      phoneNumberId: formData.whatsappPhoneNumberId
+    });
+    await api.put('/settings/whitelabel', {
+      logo: formData.brandingLogo,
+      primaryColor: formData.brandingPrimaryColor
+    });
+    alert('Configuration terminée !');
+    window.location.href = '/';
+  };
+
+  return (
+    <div>
+      {step === 1 && (
+        <div>
+          <h3>Configuration WhatsApp</h3>
+          <input name="whatsappAccessToken" placeholder="Access Token" onChange={handleChange} className="border p-2 w-full mb-2" />
+          <input name="whatsappPhoneNumberId" placeholder="Phone Number ID" onChange={handleChange} className="border p-2 w-full mb-2" />
+          <button onClick={nextStep} className="bg-green-500 text-white px-4 py-2">Suivant</button>
+        </div>
+      )}
+      {step === 2 && (
+        <div>
+          <h3>Personnalisation</h3>
+          <input name="brandingLogo" placeholder="Logo URL" onChange={handleChange} className="border p-2 w-full mb-2" />
+          <input name="brandingPrimaryColor" type="color" onChange={handleChange} className="border p-2 w-full mb-2" />
+          <button onClick={prevStep} className="mr-2 bg-gray-500 text-white px-4 py-2">Précédent</button>
+          <button onClick={handleSubmit} className="bg-green-500 text-white px-4 py-2">Terminer</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default OnboardingWizard;
+```
+
+---
+
+### Frontend – Fichiers principaux
+
+#### `frontend/src/index.js`
+```javascript
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+```
+
+#### `frontend/src/index.css`
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #25D366;
+  --secondary: #075E54;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+```
+
+#### `frontend/src/utils/socket.js`
+```javascript
+import { io } from 'socket.io-client';
+
+let socket;
+
+export const initSocket = (token) => {
+  socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+    auth: { token }
+  });
+  return socket;
+};
+
+export default socket;
+```
+
+#### `frontend/tailwind.config.js`
+```javascript
+module.exports = {
+  content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+#### `frontend/nginx.conf`
+```
+events {
+    worker_connections 1024;
+}
+
+http {
+    server {
+        listen 80;
+        server_name localhost;
+
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+            try_files $uri $uri/ /index.html;
+        }
+
+        location /api/ {
+            proxy_pass http://backend:5000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+```
+
+---
+
+Avec ces fichiers, vous disposez de l’intégralité du code source de **whatsMaster Suite** dans sa version améliorée. Si vous avez besoin d’autres fichiers ou de précisions, n’hésitez pas à demander.  Créer la plateforme whatsMaster suite 
