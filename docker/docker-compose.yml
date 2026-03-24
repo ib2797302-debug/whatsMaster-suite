@@ -1,0 +1,308 @@
+# Docker Compose - Architecture Microservices WhatsMaster Suite
+
+version: '3.8'
+
+services:
+  # ==================== INFRASTRUCTURE ====================
+  
+  # Redis - Cache & Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: whatsmaster-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - whatsmaster-network
+
+  # MongoDB - Base de données principale
+  mongodb:
+    image: mongo:7
+    container_name: whatsmaster-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-securepassword123}
+      MONGO_INITDB_DATABASE: whatsmaster
+    volumes:
+      - mongo_data:/data/db
+      - ./infra/mongodb/init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/whatsmaster --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - whatsmaster-network
+
+  # ==================== MICROSERVICES ====================
+  
+  # Service d'Authentification
+  auth-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-auth
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=auth-service
+      - PORT=3001
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      - JWT_EXPIRES_IN=24h
+      - COOKIE_SECURE=true
+      - COOKIE_HTTP_ONLY=true
+      - COOKIE_SAME_SITE=strict
+    ports:
+      - "3001:3001"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service de Messagerie
+  messaging-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-messaging
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=messaging-service
+      - PORT=3002
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - WHATSAPP_API_URL=${WHATSAPP_API_URL}
+    ports:
+      - "3002:3002"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service de Campagnes
+  campaigns-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-campaigns
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=campaigns-service
+      - PORT=3003
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    ports:
+      - "3003:3003"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service d'Automatisation
+  automation-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-automation
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=automation-service
+      - PORT=3004
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+    ports:
+      - "3004:3004"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service de Notifications
+  notifications-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-notifications
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=notifications-service
+      - PORT=3005
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    ports:
+      - "3005:3005"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service de Paiements
+  payments-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-payments
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=payments-service
+      - PORT=3006
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "3006:3006"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Service d'Analytics
+  analytics-service:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: whatsmaster-analytics
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=analytics-service
+      - PORT=3007
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3007:3007"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.gateway
+    container_name: whatsmaster-gateway
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - MESSAGING_SERVICE_URL=http://messaging-service:3002
+      - CAMPAIGNS_SERVICE_URL=http://campaigns-service:3003
+      - AUTOMATION_SERVICE_URL=http://automation-service:3004
+      - NOTIFICATIONS_SERVICE_URL=http://notifications-service:3005
+      - PAYMENTS_SERVICE_URL=http://payments-service:3006
+      - ANALYTICS_SERVICE_URL=http://analytics-service:3007
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-service
+      - messaging-service
+      - campaigns-service
+      - automation-service
+      - notifications-service
+      - payments-service
+      - analytics-service
+    networks:
+      - whatsmaster-network
+    restart: unless-stopped
+
+  # Worker pour les tâches asynchrones
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.worker
+    container_name: whatsmaster-worker
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://${MONGO_USERNAME:-admin}:${MONGO_PASSWORD:-securepassword123}@mongodb:27017/whatsmaster?authSource=admin
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - CONCURRENCY=${WORKER_CONCURRENCY:-5}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - whatsmaster-network
+    deploy:
+      replicas: 3
+    restart: unless-stopped
+
+  # RabbitMQ - Message Queue (optionnel, peut utiliser Redis)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: whatsmaster-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rabbitmq}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-securepassword123}
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - whatsmaster-network
+    profiles:
+      - with-rabbitmq
+
+networks:
+  whatsmaster-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+  mongo_data:
+  rabbitmq_data:

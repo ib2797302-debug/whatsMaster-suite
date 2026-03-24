@@ -3,8 +3,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { useGetContacts, useCreateContact, useDeleteContact } from "@workspace/api-client-react";
 import { MOCK_CONTACTS } from "@/lib/mock-data";
 import { Search, Plus, MoreHorizontal, UserX, UserCheck } from "lucide-react";
-import { format } from "date-fns";
-import { fr } from "date-fns/locale";
+import { formatRelativeTime, formatPhoneNumber, capitalize } from "@/lib/formatters";
 
 export default function ContactsPage() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,7 +67,7 @@ export default function ContactsPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 font-mono text-white/80">{contact.phone}</td>
+                    <td className="p-4 font-mono text-white/80">{formatPhoneNumber(contact.phone)}</td>
                     <td className="p-4 hidden md:table-cell">
                       <div className="flex gap-2 flex-wrap">
                         {contact.tags?.map(tag => (
@@ -77,7 +76,7 @@ export default function ContactsPage() {
                       </div>
                     </td>
                     <td className="p-4 hidden sm:table-cell text-muted-foreground">
-                      {format(new Date(contact.createdAt), 'dd MMM yyyy', { locale: fr })}
+                      {formatRelativeTime(new Date(contact.createdAt))}
                     </td>
                     <td className="p-4 text-right">
                       <button className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground transition-colors">

@@ -6,6 +6,13 @@ import { MessageSquare, Users, Megaphone, Clock, ArrowUpRight } from "lucide-rea
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { CardSkeleton, TableSkeleton } from "@/components/ui/loading";
+import { 
+  formatNumber, 
+  formatRelativeTime, 
+  formatPercentage,
+  capitalize 
+} from "@/lib/formatters";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -17,18 +24,48 @@ export default function DashboardPage() {
   if (isLoading) {
     return (
       <DashboardLayout>
-        <div className="flex h-[60vh] items-center justify-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <div className="space-y-8">
+          {/* Header Skeleton */}
+          <div className="space-y-2">
+            <div className="h-9 w-64 bg-muted animate-pulse rounded-lg" />
+            <div className="h-5 w-96 bg-muted animate-pulse rounded-lg" />
+          </div>
+
+          {/* KPI Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <CardSkeleton 
+                key={i} 
+                showImage={false} 
+                showTitle={true} 
+                showDescription={false}
+                showFooter={true}
+              />
+            ))}
+          </div>
+
+          {/* Main Content Skeleton */}
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Chart Skeleton */}
+            <div className="lg:col-span-2">
+              <CardSkeleton showImage={false} showTitle={true} showDescription={false} showFooter={true} />
+            </div>
+            
+            {/* Activity Feed Skeleton */}
+            <div>
+              <TableSkeleton rows={6} columns={1} />
+            </div>
+          </div>
         </div>
       </DashboardLayout>
     );
   }
 
   const kpis = [
-    { name: "Conversations Ouvertes", value: stats.openConversations, icon: MessageSquare, color: "text-blue-500", bg: "bg-blue-500/10" },
-    { name: "Total Contacts", value: stats.totalContacts, icon: Users, color: "text-emerald-500", bg: "bg-emerald-500/10" },
-    { name: "Campagnes Actives", value: stats.totalCampaigns, icon: Megaphone, color: "text-purple-500", bg: "bg-purple-500/10" },
-    { name: "Temps Réponse Moyen", value: `${stats.avgResponseTime} min`, icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
+    { name: "Conversations Ouvertes", value: formatNumber(stats.openConversations), icon: MessageSquare, color: "text-blue-500", bg: "bg-blue-500/10" },
+    { name: "Total Contacts", value: formatNumber(stats.totalContacts), icon: Users, color: "text-emerald-500", bg: "bg-emerald-500/10" },
+    { name: "Campagnes Actives", value: formatNumber(stats.totalCampaigns), icon: Megaphone, color: "text-purple-500", bg: "bg-purple-500/10" },
+    { name: "Temps Réponse Moyen", value: `${Math.round(stats.avgResponseTime)} min`, icon: Clock, color: "text-orange-500", bg: "bg-orange-500/10" },
   ];
 
   return (
@@ -106,8 +143,8 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-white/90">{activity.description}</p>
-                    <p className="text-xs text-muted-foreground mt-1 capitalize">
-                      {format(new Date(activity.time), 'HH:mm - eeee d', { locale: fr })}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formatRelativeTime(new Date(activity.time))}
                     </p>
                   </div>
                 </div>
